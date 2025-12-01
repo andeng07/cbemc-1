@@ -1,15 +1,16 @@
 #ifndef ACCESS_CONTROL_HPP
 #define ACCESS_CONTROL_HPP
 
+#include <TimeLib.h>
 #include "models.hpp"
 #include "Repository.hpp"
 #include "EventBus.hpp"
 #include "PermissionUtility.hpp"
 
-constexpr int MAX_USERS = 20;
-constexpr int MAX_LOGS = 100;
-constexpr int MAX_READERS = 20;
-constexpr int MAX_ATTENDANCE = 20;
+constexpr int MAX_USERS = 3;
+constexpr int MAX_LOGS = 20;
+constexpr int MAX_READERS = 3;
+constexpr int MAX_ATTENDANCE = 3;
 
 Repository<Attendance, MAX_ATTENDANCE> attendanceRepo;
 Repository<User, MAX_USERS> usersRepo;
@@ -62,13 +63,15 @@ void swipe_card(const char* cardId, int readerId) {
     Reader* reader = readersRepo.find([readerId](const Reader& r){ return r.id == readerId; });
     if (!reader) return;
 
-    User* user = usersRepo.find([cardId](const User& u){ return strcmp(u.cardId, cardId) == 0; });
+    User* user = usersRepo.find([cardId](const User& u){
+        return strcmp(u.cardId, cardId) == 0; 
+    });
 
     Log log;
     strncpy(log.cardId, cardId, sizeof(log.cardId));
     log.cardId[sizeof(log.cardId) - 1] = '\0';
     log.readerId = readerId;
-    log.timestamp = static_cast<unsigned long>(time(nullptr));
+    log.timestamp = now();
     log.action = getNextAction(cardId, readerId);
 
     if (!user) {
